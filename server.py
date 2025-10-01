@@ -3,6 +3,7 @@ import json
 import os
 from io import BytesIO
 
+import requests  # for /voices
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 
@@ -12,17 +13,12 @@ try:
     from worker import speech_to_text, text_to_speech, openai_process_message
 except Exception:  # if worker.py isn’t ready yet, define minimal placeholders
     def speech_to_text(audio_bytes: bytes) -> str:
-        # TODO: implement real STT (IBM Watson, etc.)
         return "hello"
 
     def openai_process_message(user_message: str) -> str:
-        # TODO: implement real LLM (OpenAI, etc.)
         return f"You said: {user_message}"
 
     def text_to_speech(text: str, voice: str = "default") -> bytes:
-        # TODO: implement real TTS (IBM Watson, etc.)
-        # Return a tiny valid WAV header with silence so the UI can “play” something
-        # This is a 16-bit PCM mono 8kHz WAV with ~0.1s of silence
         import wave, struct, io
         buf = io.BytesIO()
         with wave.open(buf, "wb") as w:
@@ -49,7 +45,7 @@ def index():
 def stt_route():
     """
     Expects raw audio bytes in the request body (the front-end sends Blob without a content-type).
-    Returns: {"text": "..."} 
+    Returns: {"text": "..."}
     """
     try:
         audio_bytes = request.get_data()  # bytes
@@ -93,6 +89,38 @@ def process_message_route():
 
     except Exception as e:
         return jsonify({"error": f"Processing failed: {e}"}), 500
+
+
+# -------- /voices: return a flat list the front-end can use --------
+@app.route("/voices", methods=["GET"])
+def voices_route():
+    """
+    Returns a simplified list of Watson TTS voices:
+      [ { "name": "...", "label": "...", "language": "..." }, ... ]
+    """
+    try:
+        base_url = "https://sn-watson-tts.labs.skills.network"
+        url = f"{base_url}/text-to-speech/api/v1/voices"
+        res = requests.get(url, timeout=15)
+
+        if res.status_code != 200:
+            return jsonify({"error": f"Upstream {res.status_code}"}), 502
+
+        raw = res.json() or {}
+        items = raw.get("voices", []) or []
+
+        simplified = []
+        for v in items:
+            name = v.get("name", "")
+            language = v.get("language", "")
+            # Prefer the friendly description, fall back to the name
+            label = (v.get("description") or name or "").strip()
+            simplified.append({"name": name, "label": label, "language": language})
+
+        return jsonify(simplified), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch voices: {e}"}), 500
 
 
 if __name__ == "__main__":
