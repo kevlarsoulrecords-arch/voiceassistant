@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Voice Assistant</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <!-- Icons + jQuery (required by script.js for `$` and the mic/volume icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" referrerpolicy="no-referrer" />
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <!-- App script -->
+  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+  <h1>Voice Assistant</h1>
+
+  <div style="margin: 8px 0;">
+    <label>
+      <input id="light-dark-mode-switch" type="checkbox" />
+      Toggle light/dark mode
+    </label>
+    <div style="display:inline-block; margin-left:16px;">
+      <label for="voice-options">Choose a Voice</label>
+      <select id="voice-options">
+        <option value="default" selected>default</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Chat window -->
+  <div id="chat-window" class="col-12 text-center d-flex justify-content-around">
+    <div style="width:100%;">
+      <div id="message-list"></div>
+
+      <!-- Loading bubbles (user + bot) -->
+      <div class="loading-animation my-loading">
+        <div class="loading-dots my-loading">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+
+      <div class="loading-animation">
+        <div class="loading-dots">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input row -->
+  <div style="margin-top:12px;">
+    <div class="input-group">
+      <input id="message-input" type="text" placeholder="Type your message here..." />
+      <button id="send-button" class="btn microphone">
+        <i class="fa fa-microphone"></i>
+      </button>
+    </div>
+  </div>
+</body>
+</html>
